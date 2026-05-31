@@ -205,7 +205,7 @@
 
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZ6VygGebB0snlCqxWpHCkTe8Vds6QItaUye2xbfRaSDhBBhHWkYvj1zZ_gOCzQ0c/exec";
-const ADMIN_PASSWORD  = "Kalibrasyon2026";
+const ADMIN_PASSWORD  = "Degerleme2025!";
 
 const questions = [
   // ── WORD ──────────────────────────────────────────────────────────
@@ -364,9 +364,26 @@ function goHome(){person={};current=0;answers={};selectedIdx=null;confirmed=fals
 function calcScore(ans){return Object.entries(ans).filter(([id,a])=>{const q=questions.find(q=>q.id==id);return q&&a===q.correct;}).length;}
 function calcSections(ans){return sectionMeta.map(s=>{const sqs=questions.filter(q=>q.id>=s.range[0]&&q.id<=s.range[1]);const correct=sqs.filter(q=>ans[q.id]===q.correct).length;return{...s,correct,total:sqs.length,pct:Math.round(correct/sqs.length*100)};});}
 
-async function checkName(name){const r=await fetch(APPS_SCRIPT_URL+"?action=check&name="+encodeURIComponent(name));const d=await r.json();return d.exists;}
-async function saveResult(data){await fetch(APPS_SCRIPT_URL,{method:"POST",body:JSON.stringify(data)});}
-async function loadResults(){const r=await fetch(APPS_SCRIPT_URL+"?action=list");const d=await r.json();return d.results||[];}
+async function appsGet(params){
+  const url=APPS_SCRIPT_URL+"?"+new URLSearchParams(params).toString();
+  const r=await fetch(url,{method:"GET",mode:"cors",redirect:"follow"});
+  return await r.json();
+}
+async function appsPost(data){
+  const r=await fetch(APPS_SCRIPT_URL,{method:"POST",mode:"no-cors",body:JSON.stringify(data)});
+  return true;
+}
+async function checkName(name){
+  try{const d=await appsGet({action:"check",name});return d.exists;}
+  catch(e){console.error("checkName error",e);return false;}
+}
+async function saveResult(data){
+  try{await appsPost(data);}catch(e){console.error("saveResult error",e);}
+}
+async function loadResults(){
+  try{const d=await appsGet({action:"list"});return d.results||[];}
+  catch(e){console.error("loadResults error",e);return[];}
+}
 
 async function startTest(){
   const name=document.getElementById("f-name").value;
